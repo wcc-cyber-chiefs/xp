@@ -1,0 +1,25 @@
+name: Join XP
+description: Get on the Cyber Chiefs XP board and start earning levels and badges.
+title: "Join XP"
+labels: ["xp-join"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Welcome! Submit this and a bot adds you to the board within a minute or two.
+        Your GitHub username is taken from your account automatically.
+  - type: input
+    id: discord
+    attributes:
+      label: Discord username
+      description: Optional. Only used so officers can match you up in the WCC Cyber Club server.
+      placeholder: e.g. alexdoe
+    validations:
+      required: false
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Public board
+      options:
+        - label: I understand my GitHub username, XP, level, badges and XP activity will be shown on a public page.
+          required: true

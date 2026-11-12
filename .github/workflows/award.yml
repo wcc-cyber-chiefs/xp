@@ -1,0 +1,54 @@
+name: award
+
+# Officers award XP by commenting on any issue (pin one called "XP desk"):
+#   /award @alex @sam attendance 2026-11-18
+#   /award @alex writeup https://github.com/wcc-cyber-chiefs/writeups/pull/12
+#   /award @alex award 50 ran the IR tabletop
+# Only usernames listed under `officers:` in xp-config.yml are accepted.
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: xp-ledger
+  cancel-in-progress: false
+
+jobs:
+  award:
+    if: startsWith(github.event.comment.body, '/award') && !github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      # User-supplied text only ever goes through env vars and files, never ${{ }} inside run:
+      - name: Apply award
+        env:
+          BODY: ${{ github.event.comment.body }}
+          ACTOR: ${{ github.event.comment.user.login }}
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/body.txt"
+          python scripts/xp.py award --actor "$ACTOR" --body-file "$RUNNER_TEMP/body.txt" --reply-file "$RUNNER_TEMP/reply.md"
+      - name: Commit ledger
+        run: |
+          if git diff --quiet data/; then echo "no ledger change"; exit 0; fi
+          git config user.name "cyber-chiefs-xp[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ledger.jsonl
+          git commit -m "xp: award by ${{ github.event.comment.user.login }}"
+          git push
+          echo "CHANGED=1" >> "$GITHUB_ENV"
+      - name: Reply and rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$NUM" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/reply.md"
+          if [ "${CHANGED:-0}" = "1" ]; then gh workflow run build.yml --repo "$GITHUB_REPOSITORY" --ref main; fi

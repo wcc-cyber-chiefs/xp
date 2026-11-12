@@ -1,0 +1,72 @@
+# Cyber Chiefs XP system config.
+# Officers can tune everything here without touching code.
+# Every change rebuilds the site and recomputes everyone's XP from the ledger.
+
+club:
+  name: WCC Cyber Chiefs
+  handle: cyber_chiefs                       # shown after the ">" prompt on level badges
+  org: wcc-cyber-chiefs
+  site_url: https://wcc-cyber-chiefs.github.io/xp
+
+# GitHub usernames allowed to run /award. Keep at least two people here,
+# and update it every time leadership changes.
+officers:
+  - cyber-tech-kev
+  # - next-president-username
+  # - club-advisor-username
+
+# Used for the "this semester" leaderboard tab. Add each new semester here.
+semesters:
+  - { name: "Fall 2026", start: 2026-08-17, end: 2026-12-12 }
+
+# Where XP comes from.
+#   xp: default points (null = officer must give an amount)
+#   unique: true = one award per user per ref (no double-dipping on the same challenge or session)
+sources:
+  attendance:     { xp: 10,   unique: true,  label: "attended a session" }
+  ctf_easy:       { xp: 10,   unique: true,  label: "solved an easy challenge" }
+  ctf_medium:     { xp: 25,   unique: true,  label: "solved a medium challenge" }
+  ctf_hard:       { xp: 50,   unique: true,  label: "solved a hard challenge" }
+  ctf_firstblood: { xp: 15,   unique: true,  label: "first blood" }
+  writeup:        { xp: 40,   unique: true,  label: "published a writeup" }
+  challenge:      { xp: 75,   unique: true,  label: "authored a challenge" }
+  review:         { xp: 10,   unique: true,  label: "reviewed a PR" }
+  quest:          { xp: 10,   unique: true,  label: "completed a quest step" }
+  award:          { xp: null, unique: false, label: "officer award" }
+  correction:     { xp: null, unique: false, label: "correction" }   # negative amounts allowed
+
+# Level ladder. Colors: red, blue, amber, green, purple, teal, pink, gray
+levels:
+  - { name: recruit,        min: 0,    color: gray }
+  - { name: packet_sniffer, min: 100,  color: teal }
+  - { name: log_wrangler,   min: 300,  color: blue }
+  - { name: threat_hunter,  min: 700,  color: purple }
+  - { name: chief,          min: 1500, color: amber }
+
+# Achievement badges.
+#   icon: drop, prompt, flag, bars, nodes, crosshair, star
+#   metric: count (entries from `sources`), streak (consecutive sessions attended),
+#           joined_before (joined the XP system before `date`)
+#   tiers: thresholds for bronze / silver / gold. A single threshold = one-time badge.
+badges:
+  first_blood:
+    { icon: drop, color: red, metric: count, sources: [ctf_firstblood], tiers: [1, 5, 15],
+      desc: "First to solve a challenge" }
+  writer:
+    { icon: prompt, color: blue, metric: count, sources: [writeup], tiers: [3, 10, 25],
+      desc: "Published writeups" }
+  challenge_dev:
+    { icon: flag, color: amber, metric: count, sources: [challenge], tiers: [1, 3, 6],
+      desc: "Authored CTF challenges" }
+  regular:
+    { icon: bars, color: green, metric: streak, tiers: [4, 8, 12],
+      desc: "Consecutive sessions attended" }
+  solver:
+    { icon: crosshair, color: teal, metric: count, sources: [ctf_easy, ctf_medium, ctf_hard], tiers: [5, 20, 50],
+      desc: "CTF challenges solved" }
+  mentor:
+    { icon: nodes, color: purple, metric: count, sources: [review], tiers: [5, 15, 30],
+      desc: "Reviewed other members' work" }
+  founder:
+    { icon: star, color: pink, metric: joined_before, date: 2026-12-12, tiers: [1],
+      desc: "Joined in the first semester of XP" }

@@ -1,0 +1,28 @@
+{
+  "members": {
+    "alexdoe": {
+      "joined": "2026-09-02T18:00:00Z",
+      "discord": "alexdoe"
+    },
+    "jsmith": {
+      "joined": "2026-09-02T18:00:00Z",
+      "discord": "jsmith"
+    },
+    "ngarcia": {
+      "joined": "2026-09-09T18:00:00Z",
+      "discord": "ngarcia"
+    },
+    "pwong": {
+      "joined": "2026-10-14T18:00:00Z",
+      "discord": "pwong"
+    },
+    "rbaker": {
+      "joined": "2026-11-04T18:00:00Z",
+      "discord": "rbaker"
+    },
+    "cyber-tech-kev": {
+      "joined": "2026-08-20T18:00:00Z",
+      "discord": "cyber-tech-kev"
+    }
+  }
+}

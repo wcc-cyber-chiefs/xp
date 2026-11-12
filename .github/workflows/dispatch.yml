@@ -1,0 +1,45 @@
+name: dispatch
+
+# Lets other club repos (the CTF board, the quest repo, writeups) award XP automatically.
+# They send a repository_dispatch to this repo with event_type "xp-event":
+#   {"event_type":"xp-event","client_payload":{"user":"alexdoe","source":"ctf_medium","ref":"web-02"}}
+# Only callers with a token that has write access to this repo can send it.
+on:
+  repository_dispatch:
+    types: [xp-event]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: xp-ledger
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Record event
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
+          SENDER: ${{ github.event.sender.login }}
+        run: |
+          printf '%s' "$PAYLOAD" > "$RUNNER_TEMP/payload.json"
+          python scripts/xp.py dispatch --payload-file "$RUNNER_TEMP/payload.json" --sender "$SENDER"
+      - name: Commit and rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet data/; then echo "nothing new"; exit 0; fi
+          git config user.name "cyber-chiefs-xp[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ledger.jsonl
+          git commit -m "xp: event from ${{ github.event.sender.login }}"
+          git push
+          gh workflow run build.yml --repo "$GITHUB_REPOSITORY" --ref main

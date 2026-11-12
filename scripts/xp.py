@@ -435,7 +435,7 @@ def join_panel(cfg: dict, today: str) -> str:
         '<li>fill it out and submit<span>add your Discord name (optional), tick the box, then click '
         '<b>Create</b>.</span></li>'
         '<li>you\'re in<span>a bot adds you within a minute and replies with your profile link. '
-        'you\'ll show up here once you earn your first xp.</span></li>'
+        'you\'ll show up on the board a minute or two later.</span></li>'
         '<li>show it off<span>your profile page has a snippet that puts your live level and badges '
         'on your GitHub profile.</span></li>'
         '</ol>'
@@ -446,9 +446,8 @@ def join_panel(cfg: dict, today: str) -> str:
 
 def board_rows(cfg, users, key) -> str:
     ranked = sorted(users.items(), key=lambda kv: (-kv[1][key], kv[0].lower()))
-    ranked = [(u, d) for u, d in ranked if d[key] > 0]
     if not ranked:
-        return '<div class="empty">no xp yet. <a href="#join">join</a> and be the first.</div>'
+        return '<div class="empty">nobody here yet. <a href="#join">join</a> and be the first.</div>'
     rows = []
     for i, (u, d) in enumerate(ranked, 1):
         lvl = cfg["levels"][d["level"]]

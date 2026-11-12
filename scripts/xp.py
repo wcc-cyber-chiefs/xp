@@ -374,27 +374,81 @@ td.xp{text-align:right;color:var(--accent);white-space:nowrap}.mini img{width:31
 pre{background:var(--panel);border:1px solid var(--line);padding:12px;overflow-x:auto;font-size:12px;white-space:pre-wrap;word-break:break-all}
 .feed{list-style:none;padding:0;margin:0}.feed li{border-bottom:1px solid var(--line);padding:6px 0;color:var(--muted)}
 .feed b{color:var(--text);font-weight:400}.empty{color:var(--muted);padding:24px;text-align:center}
+nav.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px}
+nav.top a.home{color:var(--muted)}
+a.cta{display:inline-block;color:#07090C;background:var(--accent);padding:7px 16px;font-size:13px;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}a.cta:hover{text-decoration:none;filter:brightness(1.1)}
+.join{border:1px solid var(--accent);background:var(--panel);padding:18px 20px;margin:24px 0}
+.join h3{margin:0 0 4px;font-size:15px;font-weight:500;color:var(--accent)}.join>p{margin:0 0 12px;color:var(--muted);font-size:13px}
+.steps{list-style:none;padding:0;margin:0 0 16px;counter-reset:s}
+.steps li{counter-increment:s;padding:6px 0 6px 40px;position:relative;border-bottom:1px dashed var(--line)}
+.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;color:var(--accent)}
+.steps li span{display:block;color:var(--muted);font-size:12px}
+.founder{color:#ED93B1;font-size:13px;margin:0 0 14px}.fine{color:var(--muted);font-size:12px;margin:12px 0 0}
 h2{font-size:15px;font-weight:500;margin:28px 0 8px}h2::before{content:"// ";color:var(--muted)}
 button.copy{font:inherit;font-size:12px;background:none;border:1px solid var(--line);color:var(--muted);padding:3px 10px;cursor:pointer}
 @media(max-width:640px){.mini{display:none}th.mini{display:none}}
 """
 
 
-def page(title: str, body: str, depth: int = 0) -> str:
+def page(title: str, body: str, depth: int = 0, cfg: dict | None = None) -> str:
     up = "../" * depth
+    cfg = cfg or {}
+    club = cfg.get("club", {})
+    home = club.get("home_url", "")
+    join = join_url(cfg) if cfg else ""
+    nav = ""
+    if home or join:
+        nav = ('<nav class="top">'
+               + (f'<a class="home" href="{html.escape(home)}">&lt;- club home</a>' if home else '<span></span>')
+               + (f'<a class="cta" href="{html.escape(join)}">join xp</a>' if join else '')
+               + '</nav>')
     return (f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{html.escape(title)}</title><style>{CSS}</style></head><body><div class="wrap">'
-            f'<header><h1><a href="{up}" style="color:inherit">&gt; <span>wcc_cyber_chiefs</span> // xp</a></h1>'
+            f'{nav}<header><h1><a href="{up}" style="color:inherit">&gt; <span>wcc_cyber_chiefs</span> // xp</a></h1>'
             f'<p>earn xp for showing up, solving, writing and building. levels and badges update automatically.</p></header>'
             f'{body}</div></body></html>')
+
+
+def join_url(cfg: dict) -> str:
+    org = cfg.get("club", {}).get("org", "wcc-cyber-chiefs")
+    return f"https://github.com/{org}/xp/issues/new?template=join-xp.yml"
+
+
+def join_panel(cfg: dict, today: str) -> str:
+    founder = ""
+    for b in cfg.get("badges", {}).values():
+        if b.get("metric") == "joined_before" and b.get("date", "") >= today:
+            d = dt.date.fromisoformat(b["date"])
+            founder = (f'<p class="founder">[*] join before {d.strftime("%b")} {d.day} to unlock the '
+                       f'founder badge. it won\'t be earnable again.</p>')
+            break
+    url = html.escape(join_url(cfg))
+    return (
+        '<section class="join" id="join"><h3>&gt; how to join</h3>'
+        '<p>takes about two minutes. all you need is a free GitHub account.</p>' + founder +
+        '<ol class="steps">'
+        '<li>make a free GitHub account<span>already have one? skip this. sign up at '
+        '<a href="https://github.com/signup">github.com/signup</a>. students can also grab the free '
+        '<a href="https://education.github.com/pack">GitHub Student Developer Pack</a>.</span></li>'
+        f'<li>open the join form<span>click the button below while signed in to GitHub.</span></li>'
+        '<li>fill it out and submit<span>add your Discord name (optional), tick the box, then click '
+        '<b>Create</b>.</span></li>'
+        '<li>you\'re in<span>a bot adds you within a minute and replies with your profile link. '
+        'you\'ll show up here once you earn your first xp.</span></li>'
+        '<li>show it off<span>your profile page has a snippet that puts your live level and badges '
+        'on your GitHub profile.</span></li>'
+        '</ol>'
+        f'<a class="cta" href="{url}">open the join form -&gt;</a>'
+        '<p class="fine">joining puts your GitHub username, xp and badges on this public page. '
+        'want off the board later? ask an officer.</p></section>')
 
 
 def board_rows(cfg, users, key) -> str:
     ranked = sorted(users.items(), key=lambda kv: (-kv[1][key], kv[0].lower()))
     ranked = [(u, d) for u, d in ranked if d[key] > 0]
     if not ranked:
-        return '<div class="empty">no xp yet. be the first.</div>'
+        return '<div class="empty">no xp yet. <a href="#join">join</a> and be the first.</div>'
     rows = []
     for i, (u, d) in enumerate(ranked, 1):
         lvl = cfg["levels"][d["level"]]
@@ -417,7 +471,8 @@ def event_line(cfg, e) -> str:
     return f'<li>{e["ts"][:10]} <b>{e["xp"]:+d} xp</b> {html.escape(label)}{ref}</li>'
 
 
-def build_site(cfg: dict, result: dict, ledger: list[dict], out: Path) -> None:
+def build_site(cfg: dict, result: dict, ledger: list[dict], out: Path, today: str | None = None) -> None:
+    today = today or dt.date.today().isoformat()
     if out.exists():
         shutil.rmtree(out)
     (out / "badges" / "catalog").mkdir(parents=True)
@@ -460,7 +515,7 @@ def build_site(cfg: dict, result: dict, ledger: list[dict], out: Path) -> None:
                 f'<h2>recent activity</h2><ul class="feed">{feed}</ul>')
         udir = out / "u" / u
         udir.mkdir(parents=True)
-        (udir / "index.html").write_text(page(f"{u} · Cyber Chiefs XP", body, depth=2))
+        (udir / "index.html").write_text(page(f"{u} · Cyber Chiefs XP", body, depth=2, cfg=cfg))
 
     sem = result["semester"]
     sem_name = html.escape(sem["name"]) if sem else "this semester"
@@ -479,17 +534,16 @@ def build_site(cfg: dict, result: dict, ledger: list[dict], out: Path) -> None:
         f'<div class="tabs"><button class="on" data-t="sem">{sem_name}</button><button data-t="all">all-time</button></div>'
         f'<div id="t-sem">{board_rows(cfg, users, "sem_xp")}</div>'
         f'<div id="t-all" hidden>{board_rows(cfg, users, "xp")}</div>'
+        f'{join_panel(cfg, today)}'
         f'<h2>latest</h2><ul class="feed">{feed}</ul>'
         f'<h2>badges</h2><div class="grid">{catalog}</div>'
         f'<h2>levels</h2><ul class="feed">{ladder}</ul>'
         f'<h2>how to earn</h2><ul class="feed">{earn}</ul>'
-        f'<h2>join</h2><p style="color:var(--muted)">open a <a href="https://github.com/{html.escape(cfg["club"].get("org", "wcc-cyber-chiefs"))}/xp/issues/new?template=join-xp.yml">Join XP issue</a> '
-        f'to get on the board. joining puts your GitHub username and your XP activity on this public page.</p>'
         '<script>document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{'
         'document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("on",x===b));'
         'document.getElementById("t-sem").hidden=b.dataset.t!=="sem";'
         'document.getElementById("t-all").hidden=b.dataset.t!=="all"})</script>')
-    (out / "index.html").write_text(page("Cyber Chiefs XP", body))
+    (out / "index.html").write_text(page("Cyber Chiefs XP", body, cfg=cfg))
     (out / ".nojekyll").write_text("")
 
 
@@ -530,7 +584,7 @@ def cmd_build(a):
     members, ledger = load_members(data), load_ledger(data)
     result = compute(cfg, members, ledger, a.today)
     out = Path(a.out)
-    build_site(cfg, result, ledger, out)
+    build_site(cfg, result, ledger, out, a.today)
     state = state_of(result)
     (out / "state.json").write_text(json.dumps(state, indent=1))
     prev = {}

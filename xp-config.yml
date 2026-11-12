@@ -7,6 +7,7 @@ club:
   handle: cyber_chiefs                       # shown after the ">" prompt on level badges
   org: wcc-cyber-chiefs
   site_url: https://wcc-cyber-chiefs.github.io/xp
+  home_url: https://wcc-cyber-chiefs.github.io/club-ops/   # "club home" link on every page
 
 # GitHub usernames allowed to run /award. Keep at least two people here,
 # and update it every time leadership changes.

@@ -500,7 +500,7 @@ def state_of(result: dict) -> dict:
 
 
 def diff_announcements(cfg: dict, prev: dict, new: dict) -> list[str]:
-    if not prev.get("users"):
+    if "users" not in prev:
         return []  # first deploy: don't flood the channel
     site = cfg["club"]["site_url"].rstrip("/")
     msgs = []
